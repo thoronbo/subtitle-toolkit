@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>字幕工坊 · Subtitle Toolkit</title>
+<meta name="author" content="深维工坊工作室 Deep Dimension Workshop">
+<meta name="copyright" content="深维工坊工作室 Deep Dimension Workshop">
+<meta name="description" content="在本地完成字幕格式转换、时间轴校准、双语合并与阅读速度检查。">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><i></i><i></i></span>
+      <div class="brand-text">
+        <h1>字幕工坊</h1>
+        <p>格式转换 · 时间轴校准 · 双语合并</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill" id="source-pill">等待导入</span>
+      <span class="privacy">文件不会离开你的设备</span>
+    </div>
+  </header>
+
+  <main class="workspace">
+
+    <section class="panel editor">
+      <div class="panel-head">
+        <h2>字幕内容</h2>
+        <div class="head-actions">
+          <select id="source-format" class="select" aria-label="源格式">
+            <option value="auto">自动识别</option>
+            <option value="srt">SRT</option>
+            <option value="vtt">WebVTT</option>
+            <option value="ass">ASS</option>
+          </select>
+          <label class="btn btn-ghost">
+            <input type="file" id="file-input" accept=".srt,.vtt,.ass,.ssa,.txt" hidden>
+            导入文件
+          </label>
+          <button class="btn btn-ghost" id="clear-btn" type="button">清空</button>
+        </div>
+      </div>
+
+      <div class="drop" id="drop">
+        <textarea id="source" spellcheck="false" placeholder="把字幕粘贴到这里，或直接拖入 .srt / .vtt / .ass 文件"></textarea>
+        <div class="drop-veil"><span>松开即可导入</span></div>
+      </div>
+
+      <div class="editor-foot">
+        <span id="file-note">尚未导入内容</span>
+        <span id="char-note">0 字符</span>
+      </div>
+
+      <details class="bilingual" id="bilingual-box">
+        <summary>双语合并<em>可选</em></summary>
+        <div class="bilingual-body">
+          <p class="hint">再放入一份译文，会按时间自动对齐，一句原文配一句译文。</p>
+          <textarea id="bilingual" spellcheck="false" placeholder="粘贴或拖入第二份字幕"></textarea>
+          <label class="check"><input type="checkbox" id="secondary-first"> 译文显示在上方</label>
+        </div>
+      </details>
+    </section>
+
+    <aside class="panel sidebar">
+      <div class="panel-head"><h2>调整</h2></div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="offset">整体偏移</label>
+          <span class="unit">毫秒</span>
+        </div>
+        <input type="number" id="offset" class="input" value="0" step="100" aria-label="整体偏移毫秒数">
+        <div class="chips">
+          <button type="button" data-shift="-1000">−1 秒</button>
+          <button type="button" data-shift="-500">−0.5 秒</button>
+          <button type="button" data-shift="-100">−0.1 秒</button>
+          <button type="button" data-shift="100">+0.1 秒</button>
+          <button type="button" data-shift="500">+0.5 秒</button>
+          <button type="button" data-shift="1000">+1 秒</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="speed">时间倍率</label>
+          <span class="unit">倍</span>
+        </div>
+        <input type="number" id="speed" class="input" value="1" step="0.0001" min="0.1" max="10" aria-label="时间倍率">
+        <div class="chips fps" id="fps-presets">
+          <button type="button" data-factor="0.95904" title="23.976 帧转 25 帧">23.976→25</button>
+          <button type="button" data-factor="1.04271" title="25 帧转 23.976 帧">25→23.976</button>
+          <button type="button" data-factor="0.96" title="24 帧转 25 帧">24→25</button>
+          <button type="button" data-factor="1.04167" title="25 帧转 24 帧">25→24</button>
+          <button type="button" data-factor="1.1988" title="29.97 帧转 25 帧">29.97→25</button>
+          <button type="button" data-factor="0.83417" title="25 帧转 29.97 帧">25→29.97</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><span class="field-label">整理</span></div>
+        <label class="check"><input type="checkbox" id="opt-merge" checked> 合并相邻重复字幕</label>
+        <label class="check"><input type="checkbox" id="opt-overlap" checked> 收紧时间重叠</label>
+        <div class="two">
+          <label class="mini">每屏最多行数
+            <input type="number" id="opt-lines" class="input" value="0" min="0" max="6" step="1">
+          </label>
+          <label class="mini">最短显示（毫秒）
+            <input type="number" id="opt-min" class="input" value="0" min="0" step="100">
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><span class="field-label">质检</span></div>
+        <div class="stats" id="stats"></div>
+        <ul class="issues" id="issues"></ul>
+      </div>
+    </aside>
+
+    <section class="panel output">
+      <div class="panel-head">
+        <h2>结果</h2>
+        <div class="head-actions">
+          <div class="tabs" id="format-tabs" role="tablist" aria-label="输出格式">
+            <button type="button" data-format="srt" class="active" role="tab" aria-selected="true">SRT</button>
+            <button type="button" data-format="vtt" role="tab" aria-selected="false">WebVTT</button>
+            <button type="button" data-format="ass" role="tab" aria-selected="false">ASS</button>
+          </div>
+          <button class="btn btn-ghost" id="copy-btn" type="button">复制</button>
+          <button class="btn btn-primary" id="download-btn" type="button">下载</button>
+        </div>
+      </div>
+
+      <canvas id="timeline" class="timeline" height="64" aria-hidden="true"></canvas>
+
+      <pre class="preview" id="preview"></pre>
+
+      <div class="output-foot">
+        <span id="output-note">等待导入</span>
+        <span id="action-note"></span>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span>字幕工坊 · 开源版</span>
+    <span>© 2026 深维工坊工作室 Deep Dimension Workshop · MIT License</span>
+  </footer>
+
+</div>
+
+<script src="assets/js/subtitle-core.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
